@@ -1,5 +1,6 @@
 # TDD - A Victory Story
 <!-- add intro -->
+<!-- should I add a TLDR of TDD? -->
 <!-- TBD: projects domain-->
 I wrote a new logic and unit tests for it.
 ```
