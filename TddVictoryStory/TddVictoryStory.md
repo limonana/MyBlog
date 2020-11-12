@@ -47,8 +47,8 @@ class DBLoader
    }
 }
 ``` 
-`DBLoader` was written and tested for a while. `ProjectAPI.calculateScheduling` contain a really simple logic.
-This is why I was very surprised when the test of `ProjectAPI.calculateScheduling` failed.
+`DBLoader` was written and tested for a while. `ProjectAPI.CalculateScheduling` contain a really simple logic.
+This is why I was very surprised when the test of `ProjectAPI.CalculateScheduling` failed.
 
 I start debugging and found out that `DBLoader` returns a wrong result. 
 Apparently there were no tests for `DBLoader` that check it with projects containing sub projects => loadSubProjects didn't affect the flow.

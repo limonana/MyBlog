@@ -1,0 +1,77 @@
+Index: TddVictoryStory/TddVictoryStory.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># Test Driven Development - A Victory Story\n<!-- add intro -->\nIf you are not familiar with TDD read the following \n<!-- add TDD 101 -->\n<!-- TBD: projects domain-->\nI worked on a Jira like system which its domain is projects and tasks.\nProject can contain another projects and tasks. \nA task has an estimated duration - how much time it should take to finish and\nconstraints like when it can start, which tasks should be finished before this task can start and many more. \n<!-- TBD: Image of project tree -->\nI wrote a new logic which calculate the schedule for the project.\nThe schedule is the estimated start time and end time for all the tasks and projects under a specific project.\nThe scheduling is calculated according to the tasks constraints and estimated durations.\nSo I wrote the class ScheduleCalculator and unit tests for it.\n```\nclass ScheduleCalculator\n{\n    void Calc(ProjectTree projectTree)\n    {\n        //calculate the schedule save it inside the projectTree objects.\n    }\n}\n```\nI added a new endpoint in the API which contains a simple integration code\nand wrote an integration test for it.\n```\nclass ProjectAPI(DBLoader loader, ScheduleCalculator scheduleCalculator)\n{\n    void calculateScheduling(String projectId)\n    {\n        ProjectTree projectTree = loader.Load(projectId,true);\n        scheduleCalculator.calc(projectTree);\n        SaveToDB(projectTree);\n    }\n}\n```\n`DBLoader` is an existing class which is responsible for loading from the DB and creating a Project Tree structure.\n```\nDBLoader {\n   public ProjectTree Load(ObjectIdentifier projectId,bool loadSubProjects);\n}\n``` \n`DBLoader` was written and tested for a while. `ProjectAPI.calculateScheduling` contain a really simple logic.\nThis is why I was very surprised when the test of `ProjectAPI.calculateScheduling` failed.\nI start debugging and found out that `DBLoader` returns a wrong result. \nApparently there were no tests for `DBLoader` that check it with projects containing sub projects => loadSubProjects didn't affect the flow.\nSo the test of `ProjectAPI.calculateScheduling` was the first test where `loadSubProjects` should affect the flow.\n\nSo I wrote a new test for the DBLoader which represent the same scenario.\nThe test failed, I solved the bug. The 2 tests now pass (green?). Everything is sababa \uD83D\uDE0E\n\nSince I realized that DBLoader wasn't tested with scenarios that loadSubProjects have effect the result, \nI decided to add more tests to DBLoader even though my integration test pass.\nI checked which tests I can add. Since the code was already written\nI tried to understand where the code can break by reading it. I couldn't think of any tests, I don't see any reason for the code to break.\n\nThen I stopped an told myself: \"Wait... This is not the way I usually write tests\". I usually work in TDD. Meaning I think of a test plan which contains the different dimensions of the problem , the values for each dimenstion and I choose the relvent combinations odf values. (since checking all combinations is infinite.)\nDo you want to guess ?  I found a bug ! :griningEmoji\nA really stupid bug which caused by refactoring.  DBLoader pass false instead of loadSubProjects.\n```\nDBLoader\n{\n    public ProjectTree Load(ObjectIdentifier projectId,bool loadSubProjects)\n    {\n        …\n        var projectTree = WorkitemsLoader.Load(projectId , false); //false is the bug. should pass loadSubProjects \n        …\n    }\n}\n\nWorkitemsLoader\n{\n    public ProjectTree Load(ObjectIdentifier projectId , bool recursiveLoading)\n    {\n        …\n    }\n}\n``` \nIt seems that the habit of writing tests before we are aware of the implementation is affacting the choise of \nwhich tests we write and of course which bugs we will find.\n\n<!-- add link to why I LOVE TDD -->
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- TddVictoryStory/TddVictoryStory.md	(revision c83306e9a8ba097d787d2dcb4afb67eb5359fbbd)
++++ TddVictoryStory/TddVictoryStory.md	(date 1605191647363)
+@@ -1,7 +1,6 @@
+ # Test Driven Development - A Victory Story
+-<!-- add intro -->
+-If you are not familiar with TDD read the following 
+-<!-- add TDD 101 -->
++TBD: Intro 
++<!-- add TDD 101 If you are not familiar with TDD read the following paragraph -->
+ <!-- TBD: projects domain-->
+ I worked on a Jira like system which its domain is projects and tasks.
+ Project can contain another projects and tasks. 
+@@ -26,30 +25,46 @@
+ ```
+ class ProjectAPI(DBLoader loader, ScheduleCalculator scheduleCalculator)
+ {
+-    void calculateScheduling(String projectId)
++    void CalculateScheduling(String projectId)
+     {
+-        ProjectTree projectTree = loader.Load(projectId,true);
++        bool loadSubProjects = .....
++        ProjectTree projectTree = loader.Load(projectId,loadSubProjects);
+         scheduleCalculator.calc(projectTree);
+         SaveToDB(projectTree);
+     }
+ }
+ ```
+ `DBLoader` is an existing class which is responsible for loading from the DB and creating a Project Tree structure.
++When loadSubProjects = true for a project that contains sub projects, the sub projects are loaded as trees with all their children.
++When loadSubProjects = false for a project that contains sub projects, only the sub projects are loaded without their children.
++loadSubProjects has no effect project which doesn't contain sub projects.
++<!-- should replace this with a comment in code? -->
+ ```
+-DBLoader {
+-   public ProjectTree Load(ObjectIdentifier projectId,bool loadSubProjects);
++class DBLoader
++{
++   public ProjectTree Load(String projectId, bool loadSubProjects)
++   {
++    .....
++   }
+ }
+ ``` 
+-`DBLoader` was written and tested for a while. `ProjectAPI.calculateScheduling` contain a really simple logic.
+-This is why I was very surprised when the test of `ProjectAPI.calculateScheduling` failed.
+-I start debugging and found out that `DBLoader` returns a wrong result. 
+-Apparently there were no tests for `DBLoader` that check it with projects containing sub projects => loadSubProjects didn't affect the flow.
++`DBLoader` was written and tested for a while. `ProjectAPI.CalculateScheduling` contains a really simple logic.
++This is why I was very surprised when the test of `ProjectAPI.CalculateScheduling` failed.
++
++I started debugging and found out that `DBLoader` returns a wrong result. 
++So I wrote a new test for `DBLoader` which represent the same scenario.
++
++<!-- 
++This means that loadSubProjects didn't affect the flow.
+ So the test of `ProjectAPI.calculateScheduling` was the first test where `loadSubProjects` should affect the flow.
++Looking on the tests for `DBLoader` I found out there are no tests that test it with projects containing sub projects and `loadSubProjects` = true  
++The integration test of `ProjectAPI.calculateScheduling` was the first test where DBLoader got a project with sub projects.
++So I wrote a new test for DBLoader which represent the same scenario.
++-->
+ 
+-So I wrote a new test for the DBLoader which represent the same scenario.
+-The test failed, I solved the bug. The 2 tests now pass (green?). Everything is sababa 😎
++The test failed, I found the bug and fixed it. The 2 tests now pass (green?). Everything is sababa :-)
+ 
+-Since I realized that DBLoader wasn't tested with scenarios that loadSubProjects have effect the result, 
++Since I realized that DBLoader wasn't tested with project that contain sub projects scenarios that loadSubProjects have effect the result, 
+ I decided to add more tests to DBLoader even though my integration test pass.
+ I checked which tests I can add. Since the code was already written
+ I tried to understand where the code can break by reading it. I couldn't think of any tests, I don't see any reason for the code to break.
