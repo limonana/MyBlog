@@ -1,46 +1,51 @@
-# TDD - A Victory Story
+# Test Driven Development - A Victory Story
 <!-- add intro -->
-<!-- should I add a TLDR of TDD? -->
+If you are not familiar with TDD read the following 
+<!-- add TDD 101 -->
 <!-- TBD: projects domain-->
-I wrote a new logic and unit tests for it.
+I worked on a Jira like system which its domain is projects and tasks.
+Project can contain another projects and tasks. 
+A task has an estimated duration - how much time it should take to finish and
+constraints like when it can start, which tasks should be finished before this task can start and many more. 
+<!-- TBD: Image of project tree -->
+I wrote a new logic which calculate the schedule for the project.
+The schedule is the estimated start time and end time for all the tasks and projects under a specific project.
+The scheduling is calculated according to the tasks constraints and estimated durations.
+So I wrote the class ScheduleCalculator and unit tests for it.
 ```
 class ScheduleCalculator
 {
     void Calc(ProjectTree projectTree)
     {
-        //doing some calculating and setting fields inside projectTree
+        //calculate the schedule save it inside the projectTree objects.
     }
 }
 ```
-I added a new endpoint in the API which contains a simple integration code.
+I added a new endpoint in the API which contains a simple integration code
+and wrote an integration test for it.
 ```
-class ProjectAPI
+class ProjectAPI(DBLoader loader, ScheduleCalculator scheduleCalculator)
 {
     void calculateScheduling(String projectId)
     {
-        DBLoader loader = new DBLoader();
-        ProjectTree projectTree = loader.Load(projectId);
-        ScheduleCalculator calculator = new ScheduleCalculator();
-        calculator.calc(projectTree);
+        ProjectTree projectTree = loader.Load(projectId,true);
+        scheduleCalculator.calc(projectTree);
         SaveToDB(projectTree);
     }
 }
 ```
-<!-- TBD: add some name to the new logic -->
 `DBLoader` is an existing class which is responsible for loading from the DB and creating a Project Tree structure.
-<!-- add explanation about the function-->
 ```
 DBLoader {
    public ProjectTree Load(ObjectIdentifier projectId,bool loadSubProjects);
 }
 ``` 
- 
-So I wrote an integration test between the new logic to `DBLoader`. 
-`DBLoader` was written and tested for a while. That is why I was very surprised when the test failed.
+`DBLoader` was written and tested for a while. `ProjectAPI.calculateScheduling` contain a really simple logic.
+This is why I was very surprised when the test of `ProjectAPI.calculateScheduling` failed.
 I start debugging and found out that `DBLoader` returns a wrong result. 
-Apparently there were no tests of projects containing sub projects so loadSubProjects didn't affect the flow.
-<!-- maybe was not executed? -->
-My Integration test was the first test where `loadSubProjects` affect the flow.
+Apparently there were no tests for `DBLoader` that check it with projects containing sub projects => loadSubProjects didn't affect the flow.
+So the test of `ProjectAPI.calculateScheduling` was the first test where `loadSubProjects` should affect the flow.
+
 So I wrote a new test for the DBLoader which represent the same scenario.
 The test failed, I solved the bug. The 2 tests now pass (green?). Everything is sababa 😎
 
@@ -53,21 +58,25 @@ Then I stopped an told myself: "Wait... This is not the way I usually write test
 Do you want to guess ?  I found a bug ! :griningEmoji
 A really stupid bug which caused by refactoring.  DBLoader pass false instead of loadSubProjects.
 ```
-DBLoader{
-public ProjectTree Load(ObjectIdentifier projectId,bool loadSubProjects)
+DBLoader
 {
-    …
-    var projectTree = WorkitemsLoader.Load(projectId , false);
-    ….
+    public ProjectTree Load(ObjectIdentifier projectId,bool loadSubProjects)
+    {
+        …
+        var projectTree = WorkitemsLoader.Load(projectId , false); //false is the bug. should pass loadSubProjects 
+        …
     }
 }
-WorkitemsLoader{
-public ProjectTree Load(ObjectIdentifier projectId , bool recursiveLoading){
-…..
-}
+
+WorkitemsLoader
+{
+    public ProjectTree Load(ObjectIdentifier projectId , bool recursiveLoading)
+    {
+        …
+    }
 }
 ``` 
-It seems that the habit if writing tests before we are aware of the implementation is affacting the choise of 
+It seems that the habit of writing tests before we are aware of the implementation is affacting the choise of 
 which tests we write and of course which bugs we will find.
 
 <!-- add link to why I LOVE TDD -->
