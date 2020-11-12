@@ -1,7 +1,6 @@
 # Test Driven Development - A Victory Story
-<!-- add intro -->
-If you are not familiar with TDD read the following 
-<!-- add TDD 101 -->
+TBD:Intro
+<!-- If you are not familiar with TDD read the following  add TDD 101 -->
 <!-- TBD: projects domain-->
 I worked on a Jira like system which its domain is projects and tasks.
 Project can contain another projects and tasks. 
