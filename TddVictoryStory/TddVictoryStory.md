@@ -36,19 +36,20 @@ class ProjectAPI(DBLoader loader, ScheduleCalculator scheduleCalculator)
 `DBLoader` is an existing class which is responsible for loading from the DB and creating a Project Tree structure.
 When loadSubProjects = true for a project that contains sub projects, the sub projects are loaded as trees with all their children.
 When loadSubProjects = false for a project that contains sub projects, only the sub projects are loaded without their children.
-loadSubProjects has no effect project which doesn't contain sub projects.
+loadSubProjects has no effect on a project that doesn't contain sub projects.
 <!-- should replace this with a comment in code? -->
 ```
 class DBLoader
 {
    public ProjectTree Load(String projectId, bool loadSubProjects)
    {
-    .....
+        // load project with the given projectId from the DB
+        // build ProjectTree structure
    }
 }
 ``` 
-`DBLoader` was written and tested for a while. `ProjectAPI.CalculateScheduling` contain a really simple logic.
-This is why I was very surprised when the test of `ProjectAPI.CalculateScheduling` failed.
+`DBLoader` was written and tested for a while. `ProjectAPI.CalculateScheduling` contains a simple logic.
+So I was very surprised when the test for `ProjectAPI.CalculateScheduling` failed.
 
 I start debugging and found out that `DBLoader` returns a wrong result. 
 Apparently there were no tests for `DBLoader` that check it with projects containing sub projects => loadSubProjects didn't affect the flow.
@@ -57,14 +58,17 @@ So the test of `ProjectAPI.calculateScheduling` was the first test where `loadSu
 So I wrote a new test for the DBLoader which represent the same scenario.
 The test failed, I solved the bug. The 2 tests now pass (green?). Everything is sababa 😎
 
-Since I realized that DBLoader wasn't tested with scenarios that loadSubProjects have effect the result, 
+Since I realized that DBLoader wasn't tested with scenarios where `loadSubProjects` affect the result,
 I decided to add more tests to DBLoader even though my integration test pass.
 I checked which tests I can add. Since the code was already written
 I tried to understand where the code can break by reading it. I couldn't think of any tests, I don't see any reason for the code to break.
 
-Then I stopped an told myself: "Wait... This is not the way I usually write tests". I usually work in TDD. Meaning I think of a test plan which contains the different dimensions of the problem , the values for each dimenstion and I choose the relvent combinations odf values. (since checking all combinations is infinite.)
+Then I stopped and told myself: "Wait... This is not the way I usually write tests". 
+I usually work in TDD. Meaning I think of a test plan which contains the different dimensions of the problem , 
+the values for each dimension and I choose the relevant combinations of values (since checking all combinations is infinite).
+
 Do you want to guess ?  I found a bug ! :griningEmoji
-A really stupid bug which caused by refactoring.  DBLoader pass false instead of loadSubProjects.
+A really stupid bug: DBLoader pass false instead of loadSubProjects.
 ```
 DBLoader
 {
