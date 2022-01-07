@@ -1,6 +1,6 @@
 # A Tale About A Little Breakpoint That Stuck A Huge Application
 
-TBD: image
+![suprised breakpoint](suprisied_brakpoint\breakpoint_talking_bubble.png)
 
 This is a story about a strange issuse I had when I worked with visual studio 2005 (yes, it was long long ago).I assume it can happen in any IDE.
 
